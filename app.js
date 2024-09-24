@@ -1,15 +1,27 @@
-const express = require("express");
-require("express-async-errors");
+require('dotenv').config()
+require("express-async-errors")
+const Jobs = require('models/jobs')
 
+// extra security packages
+const helmet = require('helmet')
+const cors = require('cors')
+const xss = require('xss-clean')
+const rateLimiter = require('express-rate-limit')
+
+// Swagger
+const swaggerUI = require('swagger-ui-express')
+const YAML = require('yamljs')
+const swaggerDocument = YAML.load('./swagger.yaml')
+
+const express = require('express')
 const app = express();
 
-app.set("view engine", "ejs");
-app.use(require("body-parser").urlencoded({ extended: true }));
+app.set("view engine", "ejs")
+app.use(require("body-parser").urlencoded({ extended: true }))
 
-require("dotenv").config();
-const session = require("express-session");
-const MongoDBStore = require("connect-mongodb-session")(session);
-const url = process.env.MONGO_URI;
+const session = require("express-session")
+const MongoDBStore = require("connect-mongodb-session")(session)
+const url = process.env.MONGO_URI
 
 const store = new MongoDBStore({
     uri: url,
@@ -52,6 +64,9 @@ app.use(passport.session());
 const auth = require("./middleware/auth");
 const secretWordRouter = require("./routes/secretWord");
 app.use("/secretWord", auth, secretWordRouter);
+
+const jobsRouter = require("./routes/jobs");
+app.use("/jobs", auth, jobsRouter);
 
 app.use((req, res) => {
     res.status(404).send(`That page (${req.url}) was not found.`);
